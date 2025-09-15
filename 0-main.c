@@ -6,11 +6,67 @@
 /*   By: brmaria- <brmaria-@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/20 12:38:24 by brmaria-          #+#    #+#             */
-/*   Updated: 2025/08/20 12:52:08 by brmaria-         ###   ########.fr       */
+/*   Updated: 2025/09/12 18:30:38 by brmaria-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
+
+char	**split_quote(char *command)
+{
+	char **result;
+	int	i;
+	int	j;
+
+	i = 0;
+	j = 0;
+	result = ft_calloc(count_args(command) + 1, sizeof(char *));
+	if (!result)
+		return(NULL);
+	while (command[j] && (i < count_args(command)))
+	{
+		while (command[j] == ' ')
+			j++;
+		if (!command[j])
+			break ;
+		result[i] = extract_arg(command, &j);
+		if(!result[i])
+		{
+			free_split(result);
+			return (NULL);
+		}
+		i++;
+	}
+	result[i] = NULL;
+	return (result);
+}
+
+void	pipex_execute(char *argv, char **envp)
+{
+	char	**command;
+	char	*path;
+
+	command = split_quote(argv);
+	if (!command)
+	{
+		free(command);
+		exit(1);
+	}
+	path = pipex_find_path(command[0], envp, "PATH=");
+	if (command[0][0] == '/')
+	{
+		free(path);
+		path = ft_strdup(command[0]);
+	}
+	if (!path)
+	{
+		path = pipex_find_path(command[0], envp, "PWD=");
+		if(!path || access(path, F_OK | X_OK) == -1)
+			exit(1);
+	}
+	if(execve(path, command, envp) == -1)
+		exit(1);
+}
 
 void	call_parent(char **argv, char **envp, int *pipefd)
 {
