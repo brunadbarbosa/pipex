@@ -6,7 +6,7 @@
 #    By: brmaria- <brmaria-@student.42porto.com>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/08/20 12:38:45 by brmaria-          #+#    #+#              #
-#    Updated: 2025/08/20 12:38:46 by brmaria-         ###   ########.fr        #
+#    Updated: 2025/09/16 18:35:56 by brmaria-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,6 +21,9 @@ CFLAGS = -Wall -Wextra -Werror
 
 # basic and additional files:
 SRC =	0-main.c\
+		1-parent.c\
+		2-child.c\
+		3-command.c
 		
 OBJ = $(SRC:.c=.o)
 

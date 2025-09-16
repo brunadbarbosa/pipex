@@ -6,11 +6,83 @@
 /*   By: brmaria- <brmaria-@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/20 12:38:24 by brmaria-          #+#    #+#             */
-/*   Updated: 2025/09/12 18:30:38 by brmaria-         ###   ########.fr       */
+/*   Updated: 2025/09/16 18:16:31 by brmaria-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
+
+void	free_split(char **split)
+{
+	int	i;
+
+	i = 0;
+	if (!split)
+		return ;
+	while (split[i])
+	{
+		free(split[i]);
+		i++;
+	}
+	free(split);
+}
+
+static int	count_args(const char *com)
+{
+	int		count;
+	char	quote;
+	
+	count = 0;
+	while (*com)
+	{
+		while (*com == ' ')
+			com++;
+		if (!*com)
+			break ;
+		count++;
+		if (*com == '\''|| *com == '"')
+		{
+			quote = *com++;
+			while (*com && *com != quote)
+				com++;
+			if (!*com)
+				return (-1);
+			com++;
+		}
+		else
+			while (*com && *com != '"' && *com != '\''&& *com != ' ')
+				com++;
+	}
+	return (count);
+}
+static char	*extract_arg(const char *str, int *i)
+{
+	char	quote;
+	int		start;
+	char	*arg;
+
+	if (str[*i] == '\'' || str[*i] == '"')
+	{
+		quote = str[(*i)++];
+		start = *i;
+		while (str[*i] && str[*i] != quote)
+			(*i)++;
+		if (!str[*i])
+			return (NULL);
+		arg = ft_substr(str, start, *i - start);
+		(*i)++;
+	}
+	else
+	{
+		start = *i;
+		while (str[*i] && str[*i] != ' ' && str[*i] != '\''&& str[*i] != '"')
+			(*i)++;
+		arg = ft_substr(str, start, *i - start);
+	}
+	if (!arg)
+		return (NULL);
+	return (arg);
+}
 
 char	**split_quote(char *command)
 {
@@ -39,67 +111,6 @@ char	**split_quote(char *command)
 	}
 	result[i] = NULL;
 	return (result);
-}
-
-void	pipex_execute(char *argv, char **envp)
-{
-	char	**command;
-	char	*path;
-
-	command = split_quote(argv);
-	if (!command)
-	{
-		free(command);
-		exit(1);
-	}
-	path = pipex_find_path(command[0], envp, "PATH=");
-	if (command[0][0] == '/')
-	{
-		free(path);
-		path = ft_strdup(command[0]);
-	}
-	if (!path)
-	{
-		path = pipex_find_path(command[0], envp, "PWD=");
-		if(!path || access(path, F_OK | X_OK) == -1)
-			exit(1);
-	}
-	if(execve(path, command, envp) == -1)
-		exit(1);
-}
-
-void	call_parent(char **argv, char **envp, int *pipefd)
-{
-	int	fd;
-
-	fd = open(argv[4], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	if (fd == -1);
-	{
-		close(fd);
-		exit(1);		
-	}
-	dup2(pipefd[0], STDIN_FILENO);
-	close(pipefd[0]);
-	dup2(fd, STDOUT_FILENO);
-	close(fd);
-	pipex_execute(argv[3], envp);
-}
-
-void	call_child(char **argv, char **envp, int *pipefd)
-{
-	int	fd;
-
-	fd = open(argv[1], O_RDONLY);
-	if (fd == -1);
-	{
-		close(fd);
-		exit(1);		
-	}
-	dup2(fd, STDIN_FILENO);
-	dup2(pipefd[1], STDOUT_FILENO);
-	close(pipefd[1]);
-	close(fd);
-	pipex_execute(argv[2], envp);
 }
 
 int	main(int argc, char **argv, char **envp)
